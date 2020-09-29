@@ -1,3 +1,4 @@
+#Ready For Branching
 from manimlib.imports import*
 import numpy as np
 import scipy.fftpack
@@ -84,7 +85,7 @@ class ImagedCreation(GraphScene):
         full_graph = VGroup(frequency_axes,result).to_edge(LEFT,buff = 0)
         self.add(full_graph)
 
-#Moving to Video Scene 
+#Moving to Video Scene
 class VidCreation(GraphScene):
     CONFIG = {
         "time_axes_config" : {
