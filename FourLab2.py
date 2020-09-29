@@ -12,6 +12,8 @@ USE_ALMOST_FOURIER_BY_DEFAULT = True
 NUM_SAMPLES_FOR_FFT = 1000
 DEFAULT_COMPLEX_TO_REAL_FUNC = lambda z : z.real
 
+#Building Objected to be animated in the
+#The Following Imagery Scene
 class ImagedCreation(GraphScene):
 
     CONFIG = {
