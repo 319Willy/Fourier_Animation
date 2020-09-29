@@ -66,6 +66,8 @@ class Fourier(GraphScene):
             "run_time" : 5,
         },
         "default_num_v_lines_indicating_periods" : 20,
+        "self.mean":0,
+        "self.variance":0
     }
 
 
@@ -80,10 +82,11 @@ class Fourier(GraphScene):
     ):
         # N = n_samples
         # T = time_range/n_samples
+        noise = np.random.normal(self.mean,self.variance,NUM_SAMPLES_FOR_FFT)
         time_range = float(t_max - t_min)
         time_step_size = time_range/n_samples
         time_samples = np.vectorize(time_func)(np.linspace(t_min, t_max, n_samples))
-        fft_output = np.fft.fft(time_samples)
+        fft_output = np.fft.fft(time_samples+noise)
         frequencies = np.linspace(0.0, n_samples/(2.0*time_range), n_samples//2)
         #  #Cycles per second of fouier_samples[1]
         # (1/time_range)*n_samples

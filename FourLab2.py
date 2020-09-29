@@ -11,7 +11,8 @@ USE_ALMOST_FOURIER_BY_DEFAULT = True
 #The used Number of sample is located inside
 #The FourierLib.py file
 NUM_SAMPLES_FOR_FFT = 1000
-DEFAULT_COMPLEX_TO_REAL_FUNC = lambda z : z.real
+NOISE = lambda t:0.001*np.cos(2*np.pi*9*t)
+#DEFAULT_COMPLEX_TO_REAL_FUNC = lambda z : z.real
 
 #Building Objected to be animated in the
 #The Following Imagery Scene
@@ -143,14 +144,38 @@ class VidCreation(GraphScene):
             "run_time" : 5,
         },
         "default_num_v_lines_indicating_periods" : 20,
+        "mean":0,
+        "variance":0
     }
 
     def construct(self):
+
+        time_axes = Axes(
+            x_min = 0, x_max = 20,
+            y_min = -5, y_max = 5,
+
+        number_line_config = {
+            "tick_size" : 0.05,
+        },
+        x_axis_config = {
+            "unit_size" : 1,
+            "tick_frequency":1,
+            "include_numbers":True,
+            "numbers_to_show": np.arange(0,20,2)
+
+            },
+        y_axis_config = {
+            "unit_size":0.5,
+            "tick_frequency":1,
+            "include_numbers":True,
+            "numbers_to_show":np.arange(-5,5,1),
+            "label_direction":UP,
+            "include_tip": True
+        })
+
         frequency_axes = Fourier.get_frequency_axes(self)
-        func = lambda t: -7*np.cos(2*PI*6*t)+6*np.sin(2*PI*2*t)+4*np.cos(2*PI*9*t)
+        func =lambda t: 3*np.cos(2*PI*6*t)+0.1*np.cos(2*np.pi*9*t)
+        time_func = time_axes.get_graph(func,color = RED)
         result = Fourier.get_fourier_graph(self,self.frequency_axes, func, 0, 15)
         #full_graph = VGroup(frequency_axes,result).to_edge(LEFT,buff = 0)
-
-        self.play(ShowCreation(frequency_axes))
-        self.wait()
-        self.play(ShowCreation(result),run_time = 12)
+        self.add(time_axes,time_func)
