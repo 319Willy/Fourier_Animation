@@ -1,0 +1,2 @@
+file 'C:/manim/manim/practice/tistory/graphs/media/videos/test/480p15/partial_movie_files/Number2PointTest/00000.mp4'
+file 'C:/manim/manim/practice/tistory/graphs/media/videos/test/480p15/partial_movie_files/Number2PointTest/00001.mp4'

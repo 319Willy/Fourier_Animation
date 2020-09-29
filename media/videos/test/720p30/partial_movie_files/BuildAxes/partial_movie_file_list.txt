@@ -1,0 +1,2 @@
+file 'C:/manim/manim/practice/tistory/graphs/media/videos/test/720p30/partial_movie_files/BuildAxes/00000.mp4'
+file 'C:/manim/manim/practice/tistory/graphs/media/videos/test/720p30/partial_movie_files/BuildAxes/00001.mp4'
