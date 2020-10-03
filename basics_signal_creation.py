@@ -13,7 +13,7 @@ USE_ALMOST_FOURIER_BY_DEFAULT = True
 NUM_SAMPLES_FOR_FFT = 1000
 NOISE = lambda t:0.001*np.cos(2*np.pi*9*t)
 #DEFAULT_COMPLEX_TO_REAL_FUNC = lambda z : z.real
-
+#
 #Building Objected to be animated in the
 #The Following Imagery Scene
 class ImagedCreation(GraphScene):
@@ -141,11 +141,11 @@ class MoveAlongSpectra(GraphScene):
                 "color" : TEAL,
             },
             "x_min" : 0,
-            "x_max" : 20.0,
+            "x_max" : 50.0,
             "x_axis_config" : {
-                "unit_size" : 0.6,#1.4,
+                "unit_size" : 0.225,#1.4,
                 "tick_frequency" : 10,
-                "numbers_to_show" : list(range(0, 20,5)),
+                "numbers_to_show" : list(range(2, 20,2)),
             },
             "y_min" : -7.0,
             "y_max" : 7.0,
@@ -509,3 +509,103 @@ class WrappingAnimation(GraphScene):
             return z
 
         return fourier_transform
+
+
+class Time2Frequency(GraphScene):
+    CONFIG = {
+        "time_axes_config" : {
+            "x_min" : 0,
+            "x_max" : 20,
+            "x_axis_config" : {
+                "unit_size" : 1,
+                "tick_frequency" : 2,
+                "numbers_with_elongated_ticks" : [5, 10, 15,20],
+            },
+            "y_min" : -7,
+            "y_max" : 7,
+            "y_axis_config" : {"unit_size" : 1},
+        },
+        "time_label_t" : 3.4,
+        "circle_plane_config" : {
+            "x_radius" : 2.1,
+            "y_radius" : 2.1,
+            "x_unit_size" : 1,
+            "y_unit_size" : 1,
+        },
+        "frequency_axes_config" : {
+            "number_line_config" : {
+                "color" : TEAL,
+            },
+            "x_min" : 0,
+            "x_max" : 50.0,
+            "x_axis_config" : {
+                "unit_size" : 0.225,
+                "tick_frequency" : 2,
+                "numbers_to_show" : list(range(5, 42,5)),
+            },
+            "y_min" : -2.0,
+            "y_max" : 2.0,
+            "y_axis_config" : {
+                "unit_size" :1.8,
+                "tick_frequency" : 1,
+                "label_direction" : LEFT,
+            },
+            "color" : TEAL,
+        },
+        "frequency_axes_box_color" : BLACK,
+        "text_scale_val" : 0.75,
+        "default_graph_config" : {
+            "num_graph_points" : 100,
+            "color" : YELLOW,
+        },
+        "equilibrium_height" : 1,
+        "default_y_vector_animation_config" : {
+            "run_time" : 5,
+            "rate_func" : None,
+            "remover" : True,
+        },
+        "default_time_sweep_config" : {
+            "rate_func" : None,
+            "run_time" : 5,
+        },
+        "default_num_v_lines_indicating_periods" : 20,
+        "mean":0,
+        "variance":0.5
+    }
+    def construct(self):
+        time_axis = self.set_time_axis()
+        time_func = self.get_time_func(freq = 5)
+        time_graph = self.get_time_graph(time_axis,time_func)
+        freq_axis = self.set_freq_axis()
+        freq_graph =self.get_freq_graph(freq_axis,time_func,0,1) #To adjust the main lope ONLY
+        self.animate_fourier(freq_axis,freq_graph)
+
+    def animate_fourier(self,freq_axis,freq_graph):
+        VGroup(freq_axis,freq_graph).to_edge(LEFT)
+        self.add(freq_axis)
+        self.play(ShowCreation(freq_graph),run_time = 5,rate_func = linear)
+
+    def set_time_axis(self):
+        time_axis = Axes(
+            x_min = -5    ,x_max=5,
+            y_min = -5     ,y_max=5,
+            x_axis_config = {"unit_size": 1},
+            )
+        return time_axis
+
+    def get_time_func(self,freq):
+        time_func = lambda t:np.sin(TAU*freq*t)+np.random.normal(0,0) + np.sin(TAU*3*freq*t)+np.random.normal(0,0)
+        return time_func
+   
+    def get_time_graph(self,time_axis,time_func):
+        #time_func = self.get_time_func(freq)
+        return time_axis.get_graph(time_func,color = TEAL)
+    
+    def set_freq_axis(self):
+        freq_axis = Fourier.get_frequency_axes(self)
+        return freq_axis
+
+    def get_freq_graph(self,freq_axis,time_func,t_min,t_max):
+        
+        freq_graph = Fourier.get_fourier_graph(self,freq_axis,time_func,t_min,t_max)
+        return freq_graph

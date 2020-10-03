@@ -5,7 +5,7 @@ from manimlib.utils.config_ops import digest_config
 import math
 
 USE_ALMOST_FOURIER_BY_DEFAULT = True
-NUM_SAMPLES_FOR_FFT = 750
+NUM_SAMPLES_FOR_FFT = 1000
 DEFAULT_COMPLEX_TO_REAL_FUNC = lambda z : z.real
 
 class Fourier(GraphScene):
@@ -77,17 +77,19 @@ class Fourier(GraphScene):
     #complex_to_real_func = lambda z : z.real,
     #I changed this function to obtain the magnitude of
     #the complex number rather than just the real part
-    complex_to_real_func = lambda z : z,
+    complex_to_real_func = lambda z : abs(z),
     color = RED,
     ):
         # N = n_samples
         # T = time_range/n_samples
         #noise = np.random.normal(self.mean,self.variance,NUM_SAMPLES_FOR_FFT)
         time_range = float(t_max - t_min)
+        t_range = t_max - t_min
         time_step_size = time_range/n_samples
+        #norm_t_max = n_samples/(2*t_max)
         time_samples = np.vectorize(time_func)(np.linspace(t_min, t_max, n_samples))
         fft_output = np.fft.fft(time_samples)
-        frequencies = np.linspace(0.0, n_samples/(2.0*time_range), n_samples//2)
+        frequencies = np.linspace(0.0, n_samples/(2*time_range) , n_samples//2)
         #  #Cycles per second of fouier_samples[1]
         # (1/time_range)*n_samples
         # freq_step_size = 1./time_range
@@ -96,7 +98,9 @@ class Fourier(GraphScene):
             axes.coords_to_point(
                 x, 2*complex_to_real_func(y)/(n_samples),
             )
-            for x, y in zip(frequencies, fft_output[:n_samples//2])
+            #[ORIGINAL] for x, y in zip(frequencies, fft_output[:n_samples//57])
+            for x, y in zip(frequencies, fft_output[:n_samples//(20//t_range)]) #Use this number to manipulte the length
+            
         ])
         graph.set_color(color)
         f_min, f_max = [
