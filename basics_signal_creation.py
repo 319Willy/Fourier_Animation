@@ -290,3 +290,222 @@ class updating_sine(GraphScene):
         self.add(cos_graph)
         self.play(tracker.set_value, 50, rate_func=linear, run_time=8)
         self.wait()
+
+
+class TimeSignal(GraphScene):
+        CONFIG = {
+            "time_axes_config" : {
+                "x_min" : 0,
+                "x_max" : 4.4,
+                "x_axis_config" : {
+                    "unit_size" : 3,
+                    "tick_frequency" : 0.25,
+                    "numbers_with_elongated_ticks" : [1, 2, 3],
+                },
+                "y_min" : 0,
+                "y_max" : 2,
+                "y_axis_config" : {"unit_size" : 0.8},
+            },
+            "time_label_t" : 3.4,
+            "circle_plane_config" : {
+                "x_radius" : 2.1,
+                "y_radius" : 2.1,
+                "x_unit_size" : 1,
+                "y_unit_size" : 1,
+            },
+            "frequency_axes_config" : {
+                "number_line_config" : {
+                    "color" : TEAL,
+                },
+                "x_min" : 0,
+                "x_max" : 20.0,
+                "x_axis_config" : {
+                    "unit_size" : 0.6,#1.4,
+                    "tick_frequency" : 10,
+                    "numbers_to_show" : list(range(0, 20,5)),
+                },
+                "y_min" : -7.0,
+                "y_max" : 7.0,
+                "y_axis_config" : {
+                    "unit_size" :0.5,#1.8,
+                    "tick_frequency" : 1,
+                    "label_direction" : LEFT,
+                },
+                "color" : TEAL,
+            },
+            "frequency_axes_box_color" : TEAL_E,
+            "text_scale_val" : 0.75,
+            "default_graph_config" : {
+                "num_graph_points" : 100,
+                "color" : YELLOW,
+            },
+            "equilibrium_height" : 1,
+            "default_y_vector_animation_config" : {
+                "run_time" : 5,
+                "rate_func" : None,
+                "remover" : True,
+            },
+            "default_time_sweep_config" : {
+                "rate_func" : None,
+                "run_time" : 5,
+            },
+            "default_num_v_lines_indicating_periods" : 20,
+            "mean":0,
+            "variance":0.5
+        }
+        def construct(self):
+            self.draw_sine()
+
+        def draw_sine(self):
+            time_axes =Axes(
+            x_min = 0, x_max = 10,
+            y_min = -5, y_max = 5,
+            x_axis_config = {"unit_size":2}
+            )
+            tracker = ValueTracker(0)
+
+            def pre_draw(update_param):
+                func =lambda t:3*np.cos(2*PI*t +update_param)+np.random.normal(0,0.25)
+                return func
+            def prepare_for_redraw():
+                dx = 0.0001
+                x = tracker.get_value()
+                update_param =x-dx
+                func = pre_draw(update_param)
+                sig_graph = time_axes.get_graph(func,color = RED)
+                return sig_graph
+
+            signal = prepare_for_redraw().move_to(ORIGIN)
+            self.play(ShowCreation(signal),rate_func = linear,run_time = 3.5)
+            time_graph = always_redraw(prepare_for_redraw)
+            t_sig = VGroup(time_axes,time_graph).move_to(ORIGIN)
+            self.remove(signal)
+            self.add(t_sig)
+
+            self.play(tracker.set_value, 20, rate_func=linear, run_time=5)
+            self.wait()
+
+
+class WrappingAnimation(GraphScene):
+    CONFIG = {
+        "time_axes_config" : {
+            "x_min" : 0,
+            "x_max" : 4.4,
+            "x_axis_config" : {
+                "unit_size" : 3,
+                "tick_frequency" : 0.25,
+                "numbers_with_elongated_ticks" : [1, 2, 3],
+            },
+            "y_min" : 0,
+            "y_max" : 2,
+            "y_axis_config" : {"unit_size" : 0.8},
+        },
+        "time_label_t" : 3.4,
+        "circle_plane_config" : {
+            "x_radius" : 2.1,
+            "y_radius" : 2.1,
+            "x_unit_size" : 1,
+            "y_unit_size" : 1,
+        },
+        "frequency_axes_config" : {
+            "number_line_config" : {
+                "color" : TEAL,
+            },
+            "x_min" : 0,
+            "x_max" : 20.0,
+            "x_axis_config" : {
+                "unit_size" : 0.6,#1.4,
+                "tick_frequency" : 10,
+                "numbers_to_show" : list(range(0, 20,5)),
+            },
+            "y_min" : -7.0,
+            "y_max" : 7.0,
+            "y_axis_config" : {
+                "unit_size" :0.5,#1.8,
+                "tick_frequency" : 1,
+                "label_direction" : LEFT,
+            },
+            "color" : TEAL,
+        },
+        "frequency_axes_box_color" : TEAL_E,
+        "text_scale_val" : 0.75,
+        "default_graph_config" : {
+            "num_graph_points" : 100,
+            "color" : YELLOW,
+        },
+        "equilibrium_height" : 1,
+        "default_y_vector_animation_config" : {
+            "run_time" : 5,
+            "rate_func" : None,
+            "remover" : True,
+        },
+        "default_time_sweep_config" : {
+            "rate_func" : None,
+            "run_time" : 5,
+        },
+        "default_num_v_lines_indicating_periods" : 20,
+        "mean":0,
+        "variance":0.5
+    }
+    def construct(self):
+        time_axes = Axes(
+            x_min = -10, x_max = 10,
+            y_min = -5, y_max = 5,
+
+        number_line_config = {
+            "tick_size" : 0.05,
+        },
+        x_axis_config = {
+            "unit_size" : 1,
+            "tick_frequency":1,
+            "include_numbers":True,
+            "numbers_to_show": np.arange(0,20,2)
+
+            },
+        y_axis_config = {
+            "unit_size":0.5,
+            "tick_frequency":1,
+            "include_numbers":True,
+            "numbers_to_show":np.arange(-5,5,1),
+            "label_direction":UP,
+            "include_tip": True
+        })
+        time_func = lambda t:2*np.sin(2*PI*t)+2*np.cos(4*PI*t)
+
+        circle_plane = Fourier.get_circle_plane(self)
+        #freq_graph = Fourier.get_fourier_graph(self,self.circle_plane, time_func, 0, 20)
+        Polygon
+        #self.add(circle_plane,freq_graph)
+
+
+
+
+
+
+        fft = self.get_dft(time_func,0,5)
+
+        self.add(Polygon(fft))
+        #ParametricFunction(
+        #fft_g,
+        #t_min=0,
+        #t_max=5
+        #)
+        #graph = circle_plane.get_graph(fft)
+        #self.add(circle_plane)
+        #self.add(fft_g)
+
+
+    def get_dft(self,func, t_min, t_max,
+    complex_to_real_func = DEFAULT_COMPLEX_TO_REAL_FUNC,
+    use_almost_fourier = USE_ALMOST_FOURIER_BY_DEFAULT,
+    **kwargs ##Just eats these
+    ):
+        scalar = 1./(t_max - t_min) if use_almost_fourier else 1.0
+        def fourier_transform(f):
+            z = scalar*scipy.integrate.quad(
+                lambda t : func(t)*np.exp(complex(0, -TAU*f*t)),
+                t_min, t_max
+            )[0]
+            return z
+
+        return fourier_transform

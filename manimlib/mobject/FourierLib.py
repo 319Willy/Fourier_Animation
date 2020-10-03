@@ -77,7 +77,7 @@ class Fourier(GraphScene):
     #complex_to_real_func = lambda z : z.real,
     #I changed this function to obtain the magnitude of
     #the complex number rather than just the real part
-    complex_to_real_func = lambda z : abs(z),
+    complex_to_real_func = lambda z : z,
     color = RED,
     ):
         # N = n_samples
@@ -137,3 +137,17 @@ class Fourier(GraphScene):
 
         self.frequency_axes = frequency_axes
         return frequency_axes
+
+
+
+    def get_circle_plane(self):
+        circle_plane = NumberPlane(**self.circle_plane_config)
+        circle_plane.to_corner(DOWN+LEFT)
+        circle = DashedLine(ORIGIN, TAU*UP).apply_complex_function(np.exp)
+        circle.scale(circle_plane.x_unit_size)
+        circle.move_to(circle_plane.coords_to_point(0, 0))
+        circle_plane.circle = circle
+        circle_plane.add(circle)
+        circle_plane.fade()
+        self.circle_plane = circle_plane
+        return circle_plane
