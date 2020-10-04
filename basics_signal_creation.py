@@ -16,6 +16,9 @@ NOISE = lambda t:0.001*np.cos(2*np.pi*9*t)
 #
 #Building Objected to be animated in the
 #The Following Imagery Scene
+
+
+
 class ImagedCreation(GraphScene):
 
     CONFIG = {
@@ -518,7 +521,7 @@ class Time2Frequency(GraphScene):
             "x_max" : 20,
             "x_axis_config" : {
                 "unit_size" : 1,
-                "tick_frequency" : 2,
+                "tick_frequency" : 1,
                 "numbers_with_elongated_ticks" : [5, 10, 15,20],
             },
             "y_min" : -7,
@@ -539,20 +542,21 @@ class Time2Frequency(GraphScene):
             "x_min" : 0,
             "x_max" : 50.0,
             "x_axis_config" : {
-                "unit_size" : 0.225,
+                "unit_size" : 0.45,
                 "tick_frequency" : 2,
-                "numbers_to_show" : list(range(5, 42,5)),
+                "numbers_to_show" : list(range(5, 50,5)),
             },
-            "y_min" : -2.0,
-            "y_max" : 2.0,
+            "y_min" : 0,
+            "y_max" : 1.3,
             "y_axis_config" : {
-                "unit_size" :1.8,
-                "tick_frequency" : 1,
+                "unit_size" :3,
+                "tick_frequency" : 0.5,
                 "label_direction" : LEFT,
+                "numbers_to_show" : list(range(0, 2,1)),
             },
             "color" : TEAL,
         },
-        "frequency_axes_box_color" : BLACK,
+        "frequency_axes_box_color" : RED,
         "text_scale_val" : 0.75,
         "default_graph_config" : {
             "num_graph_points" : 100,
@@ -576,30 +580,52 @@ class Time2Frequency(GraphScene):
         time_axis = self.set_time_axis()
         time_func = self.get_time_func(freq = 5)
         time_graph = self.get_time_graph(time_axis,time_func)
+        hann_coords = self.set_window(time_axis,5) #5==> Contraction Factor
+        cust_graph = self.get_cust_graph(time_axis,hann_coords[0],hann_coords[1])
         freq_axis = self.set_freq_axis()
-        freq_graph =self.get_freq_graph(freq_axis,time_func,0,1) #To adjust the main lope ONLY
-        self.animate_fourier(freq_axis,freq_graph)
+        freq_graph =self.get_freq_graph(freq_axis,time_func,0,2) #To adjust the mainlope ONLY
+
+        #self.animate_time_func(time_axis,time_graph)
+        #self.animate_fourier(freq_axis,freq_graph)
+
+    def set_window(self,axis,contraction_factor):
+        X =np.linspace(axis.x_min/contraction_factor,axis.x_max/contraction_factor,20)
+        hannwin = lambda t:np.hanning(len(t))
+        Y = hannwin(X)
+        return X ,Y
+
+    def animate_time_func(self,time_axis,time_graph):
+        t_gram = VGroup(time_graph,time_axis).scale(0.5).to_edge(UL)
+        self.play(AnimationGroup(
+            ShowCreation(time_axis,run_time = 3),ShowCreation(time_graph,run_time = 3),
+            lag_ratio = 0
+        ))
+        self.wait()
 
     def animate_fourier(self,freq_axis,freq_graph):
-        VGroup(freq_axis,freq_graph).to_edge(LEFT)
-        self.add(freq_axis)
-        self.play(ShowCreation(freq_graph),run_time = 5,rate_func = linear)
+        f_gram = VGroup(freq_axis,freq_graph).scale(0.6).to_edge(DL).shift(0.15*LEFT)
+        self.play(AnimationGroup(
+            ShowCreation(freq_axis,run_time = 3),ShowCreation(freq_graph,run_time = 3),
+            lag_ratio = 0
+        ))
+        self.wait()
 
     def set_time_axis(self):
         time_axis = Axes(
-            x_min = -5    ,x_max=5,
-            y_min = -5     ,y_max=5,
-            x_axis_config = {"unit_size": 1},
+            x_min = 0    ,x_max=10,
+            y_min = -2.2     ,y_max=2.2,
+            x_axis_config = {"unit_size": 2, "tick_frequency":5,"tick_size":0.25},
+            y_axis_config = {"unit_size": 2,"tick_frequency":1},
             )
-        return time_axis
+        return time_axis.set_color(BLUE)
 
     def get_time_func(self,freq):
-        time_func = lambda t:np.sin(TAU*freq*t)+np.random.normal(0,0) + np.sin(TAU*3*freq*t)+np.random.normal(0,0)
+        time_func = lambda t:np.sin(TAU*freq*t)#*np.hanning(t)
         return time_func
    
     def get_time_graph(self,time_axis,time_func):
         #time_func = self.get_time_func(freq)
-        return time_axis.get_graph(time_func,color = TEAL)
+        return time_axis.get_graph(time_func,color = YELLOW,stroke_width = 2)
     
     def set_freq_axis(self):
         freq_axis = Fourier.get_frequency_axes(self)
@@ -609,3 +635,21 @@ class Time2Frequency(GraphScene):
         
         freq_graph = Fourier.get_fourier_graph(self,freq_axis,time_func,t_min,t_max)
         return freq_graph
+
+    def get_cust_graph(self,axis,X,Y):
+        coords = [[px,py] for px,py in zip(X,Y)]
+        points = SmoothPtGraph.get_points_from_coords(self,axis,coords)
+        graph = SmoothPtGraph(points,color=YELLOW)
+        return graph
+
+
+
+class SmoothPtGraph(VMobject):
+    def __init__(self,set_of_points,**kwargs):
+        super().__init__(**kwargs)
+        self.set_points_smoothly(set_of_points)
+
+    def get_points_from_coords(self,axes,coords):
+        return [axes.coords_to_point(px,py)
+            for px,py in coords
+            ]

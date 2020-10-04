@@ -126,7 +126,7 @@ class Fourier(GraphScene):
             color = self.frequency_axes_box_color,
         )
         frequency_axes.box = box
-        frequency_axes.add(box)
+        #frequency_axes.add(box)
         frequency_axes.to_corner(DOWN+RIGHT, buff = MED_SMALL_BUFF)
 
         frequency_label = TextMobject("Frequency")
