@@ -18,7 +18,6 @@ NOISE = lambda t:0.001*np.cos(2*np.pi*9*t)
 #The Following Imagery Scene
 
 
-
 class ImagedCreation(GraphScene):
 
     CONFIG = {
@@ -388,6 +387,15 @@ class TimeSignal(GraphScene):
             self.play(tracker.set_value, 20, rate_func=linear, run_time=5)
             self.wait()
 
+class SmoothPtGraph(VMobject):
+    def __init__(self,set_of_points,**kwargs):
+        super().__init__(**kwargs)
+        self.set_points_smoothly(set_of_points)
+
+    def get_points_from_coords(self,axes,coords):
+        return [axes.coords_to_point(px,py)
+            for px,py in coords
+            ]
 
 class WrappingAnimation(GraphScene):
     CONFIG = {
@@ -451,21 +459,25 @@ class WrappingAnimation(GraphScene):
         "variance":0.5
     }
     def construct(self):
-        time_axes = Axes(
+        self.wrapping3()
+
+
+    def wraping1(self,):
+        time_axis = Axes(
             x_min = -10, x_max = 10,
             y_min = -5, y_max = 5,
 
-        number_line_config = {
+            number_line_config = {
             "tick_size" : 0.05,
-        },
-        x_axis_config = {
+            },
+            x_axis_config = {
             "unit_size" : 1,
             "tick_frequency":1,
             "include_numbers":True,
             "numbers_to_show": np.arange(0,20,2)
 
             },
-        y_axis_config = {
+            y_axis_config = {
             "unit_size":0.5,
             "tick_frequency":1,
             "include_numbers":True,
@@ -473,46 +485,122 @@ class WrappingAnimation(GraphScene):
             "label_direction":UP,
             "include_tip": True
         })
-        time_func = lambda t:2*np.sin(2*PI*t)+2*np.cos(4*PI*t)
+        sig_freq = 5
+        wrap_freq = 3
+        time_func = lambda t:7*np.sin(2*PI*t*sig_freq)*np.exp(-TAU*1j*t*wrap_freq)
+        t_range = np.linspace(0,150,250)
+        time_func = time_func(t_range)
+        dot = Dot(color = RED)
+        graph = self.get_cust_graph(time_axis,time_func.imag,time_func.real)
+        #self.play(ShowCreation(graph,run_time = 10,rate_func = linear))
+        self.play(AnimationGroup(
+            MoveAlongPath(dot,graph,run_time = 10,rate_func = linear),
+            ShowCreation(graph,run_time = 10,rate_func = linear),
+            lag_ratio = 0.3
+        ))
+        #self.play(MoveAlongPath(dot,graph),run_time = 15,rate_func = linear)
+        self.wait()
 
-        circle_plane = Fourier.get_circle_plane(self)
-        #freq_graph = Fourier.get_fourier_graph(self,self.circle_plane, time_func, 0, 20)
-        Polygon
-        #self.add(circle_plane,freq_graph)
+    def wraping2(self,):
+        time_axis = Axes(
+            x_min = -10, x_max = 10,
+            y_min = -5, y_max = 5,
+
+            number_line_config = {
+            "tick_size" : 0.05,
+            },
+            x_axis_config = {
+            "unit_size" : 1,
+            "tick_frequency":1,
+            "include_numbers":True,
+            "numbers_to_show": np.arange(0,20,2)
+
+            },
+            y_axis_config = {
+            "unit_size":0.5,
+            "tick_frequency":1,
+            "include_numbers":True,
+            "numbers_to_show":np.arange(-5,5,1),
+            "label_direction":UP,
+            "include_tip": True
+        })
+        sig_freq = 20
+        wrap_freq = 1
+        time_func = lambda t:np.array([3*np.sin(2*PI*t*sig_freq)*np.cos(-TAU*wrap_freq*t),
+        3*np.sin(2*PI*t*sig_freq)*np.sin(-TAU*t*wrap_freq),
+        0])
+        dot = Dot(color = RED)
+        cir = self.get_circle_plane().move_to(ORIGIN)
+        self.add((cir))
+        graph = ParametricFunction(
+            time_func,
+            x_min = -10,
+            x_max =10,
+            color = YELLOW
+        )
+        self.add(graph)
+        #self.play(ShowCreation(graph),run_time = 15,rate_func = linear)
+        self.play(MoveAlongPath(dot,graph),run_time = 15,rate_func = linear)
+        self.wait()
+
+
+    def wrapping3(self):
+        cir = self.get_circle_plane().move_to(ORIGIN)
+        self.offset = 0
+        
+        def update_curve(plot,dt):
+            plot.become(get_plot(self,self.offset))
+            self.offset += 0.011
+
+        def get_plot(self,fwrap):
+            f_sig = 10
+            #fwrap =phi       
+            plt = ParametricFunction(lambda t: np.array([3*np.sin(f_sig*TAU*t)*np.cos(-fwrap*TAU*t),3*np.sin(f_sig*TAU*t)*np.sin(-fwrap*TAU*t),0]), 
+            x_min = -5,x_max = 5).set_color(YELLOW)
+            return plt
+        plot = get_plot(self,1)
+        self.add(cir)
+        self.wait()
+        self.add(plot)
+        #self.play(ShowCreation(plot),run_time = 7,rate_func = linear)
+        plot.add_updater(update_curve)
+
+
+        #self.add(plot)
+        self.wait(30)
 
 
 
+    def get_cust_graph(self,axis,X,Y):
+        coords = [[px,py] for px,py in zip(X,Y)]
+        points = SmoothPtGraph.get_points_from_coords(self,axis,coords)
+        graph = SmoothPtGraph(points,color=TEAL,stroke_width = 4)
+        return graph
+
+
+    def get_circle_plane(self):
+        circle_plane = NumberPlane(**self.circle_plane_config)
+        circle_plane.to_corner(DOWN+LEFT)
+        circle = DashedLine(ORIGIN, TAU*UP).apply_complex_function(np.exp)
+        circle.scale(circle_plane.x_unit_size)
+        circle.move_to(circle_plane.coords_to_point(0, 0))
+        circle_plane.circle = circle
+        circle_plane.add(circle)
+        circle_plane.fade()
+        self.circle_plane = circle_plane
+        return circle_plane
 
 
 
-        fft = self.get_dft(time_func,0,5)
+class SmoothPtGraph(VMobject):
+    def __init__(self,set_of_points,**kwargs):
+        super().__init__(**kwargs)
+        self.set_points_smoothly(set_of_points)
 
-        self.add(Polygon(fft))
-        #ParametricFunction(
-        #fft_g,
-        #t_min=0,
-        #t_max=5
-        #)
-        #graph = circle_plane.get_graph(fft)
-        #self.add(circle_plane)
-        #self.add(fft_g)
-
-
-    def get_dft(self,func, t_min, t_max,
-    complex_to_real_func = DEFAULT_COMPLEX_TO_REAL_FUNC,
-    use_almost_fourier = USE_ALMOST_FOURIER_BY_DEFAULT,
-    **kwargs ##Just eats these
-    ):
-        scalar = 1./(t_max - t_min) if use_almost_fourier else 1.0
-        def fourier_transform(f):
-            z = scalar*scipy.integrate.quad(
-                lambda t : func(t)*np.exp(complex(0, -TAU*f*t)),
-                t_min, t_max
-            )[0]
-            return z
-
-        return fourier_transform
-
+    def get_points_from_coords(self,axes,coords):
+        return [axes.coords_to_point(px,py)
+            for px,py in coords
+            ]
 
 class Time2Frequency(GraphScene):
     CONFIG = {
@@ -576,22 +664,19 @@ class Time2Frequency(GraphScene):
         "mean":0,
         "variance":0.5
     }
-    def construct(self):
-        time_axis = self.set_time_axis()
-        time_func = self.get_time_func(freq = 5)
-        time_graph = self.get_time_graph(time_axis,time_func)
-        hann_coords = self.set_window(time_axis,5) #5==> Contraction Factor
-        cust_graph = self.get_cust_graph(time_axis,hann_coords[0],hann_coords[1])
-        freq_axis = self.set_freq_axis()
-        freq_graph =self.get_freq_graph(freq_axis,time_func,0,2) #To adjust the mainlope ONLY
 
-        #self.animate_time_func(time_axis,time_graph)
-        #self.animate_fourier(freq_axis,freq_graph)
+    def animate_custom(self,axis,cust_graph):
+        cust_gram = VGroup(axis,cust_graph).scale(0.7).to_edge(DL)
+        self.play(AnimationGroup(
+            ShowCreation(axis,run_time = 3),ShowCreation(cust_graph,run_time = 3),
+            lag_ratio = 1
+        ))
+        self.wait()
 
     def set_window(self,axis,contraction_factor):
         X =np.linspace(axis.x_min/contraction_factor,axis.x_max/contraction_factor,20)
         hannwin = lambda t:np.hanning(len(t))
-        Y = hannwin(X)
+        Y = 2*hannwin(X)
         return X ,Y
 
     def animate_time_func(self,time_axis,time_graph):
@@ -612,20 +697,20 @@ class Time2Frequency(GraphScene):
 
     def set_time_axis(self):
         time_axis = Axes(
-            x_min = 0    ,x_max=10,
+            x_min = 0    ,x_max=5,
             y_min = -2.2     ,y_max=2.2,
-            x_axis_config = {"unit_size": 2, "tick_frequency":5,"tick_size":0.25},
+            x_axis_config = {"unit_size": 4, "tick_frequency":.5,"tick_size":0.25},
             y_axis_config = {"unit_size": 2,"tick_frequency":1},
             )
-        return time_axis.set_color(BLUE)
+        return time_axis
 
-    def get_time_func(self,freq):
-        time_func = lambda t:np.sin(TAU*freq*t)#*np.hanning(t)
+    def get_time_func(self,freq,phi):
+        time_func = lambda t:np.sin(TAU*freq*t+phi)#*np.hanning(t)
         return time_func
    
     def get_time_graph(self,time_axis,time_func):
         #time_func = self.get_time_func(freq)
-        return time_axis.get_graph(time_func,color = YELLOW,stroke_width = 2)
+        return time_axis.get_graph(time_func,color = YELLOW,stroke_width = 5)
     
     def set_freq_axis(self):
         freq_axis = Fourier.get_frequency_axes(self)
@@ -639,17 +724,110 @@ class Time2Frequency(GraphScene):
     def get_cust_graph(self,axis,X,Y):
         coords = [[px,py] for px,py in zip(X,Y)]
         points = SmoothPtGraph.get_points_from_coords(self,axis,coords)
-        graph = SmoothPtGraph(points,color=YELLOW)
+        graph = SmoothPtGraph(points,color=YELLOW,stroke_width = 6)
         return graph
 
+    def draw_sine(self,time_axes):
+        tracker = ValueTracker(0)
+
+        def pre_draw(update_param):
+            func = self.get_time_func(freq = 1,phi = update_param)
+            return func
+        def prepare_for_redraw():
+            dx = 0.0001
+            x = tracker.get_value()
+            update_param =x-dx
+            func = pre_draw(update_param)
+            sig_graph = time_axes.get_graph(func,color = RED)
+            return sig_graph
+
+        time_graph = always_redraw(prepare_for_redraw)
+        self.add(time_graph)
+        return tracker
 
 
-class SmoothPtGraph(VMobject):
-    def __init__(self,set_of_points,**kwargs):
-        super().__init__(**kwargs)
-        self.set_points_smoothly(set_of_points)
 
-    def get_points_from_coords(self,axes,coords):
-        return [axes.coords_to_point(px,py)
-            for px,py in coords
-            ]
+
+
+    def construct(self):
+        #self.prep_workspace()
+        #self.play_time_func()
+        self.Rtime_draw()
+
+    def prep_workspace(self):
+        grid = NumberPlane()
+        box = Rectangle(width = FRAME_WIDTH,height = FRAME_HEIGHT, color = TEAL,stroke_width = 4)
+        divider = Line(box.get_left(),box.get_right(),color  =TEAL,stroke_width = 4)
+        self.add(box,divider)
+        self.wait()
+
+    def play_time_func(self):
+        time_axis = self.set_time_axis().set_color(RED)
+        time_func = self.get_time_func(freq = 1)
+        time_graph = self.get_time_graph(time_axis,time_func)
+        
+        t_gram = VGroup(time_graph,time_axis).scale(0.5).set_height(FRAME_HEIGHT/2.1).stretch_to_fit_width(FRAME_WIDTH/1.2).move_to(ORIGIN).shift(FRAME_HEIGHT*UP/4)
+        self.play(AnimationGroup(
+            #ShowCreation(time_axis,run_time = 2),
+            ShowCreation(time_graph,run_time = 3,rate_func = linear),
+            lag_ratio = 1
+        ))
+        self.wait()
+
+    def Rtime_draw(self):
+        time_axis = self.set_time_axis().set_color(TEAL)
+        tracker = ValueTracker(0)
+
+        def pre_draw(update_param):
+            func = self.get_time_func(freq = 1,phi = update_param)
+            return func
+       
+        def prepare_for_redraw():
+            dx = 0.0001
+            x = tracker.get_value()
+            update_param =x-dx
+            func = pre_draw(update_param)
+            sig_graph = time_axis.get_graph(func,color = YELLOW)
+            return VGroup(time_axis,sig_graph).stretch_to_fit_width(FRAME_WIDTH/3).stretch_to_fit_height(FRAME_HEIGHT/3).move_to(ORIGIN+(FRAME_HEIGHT/4)).shift(5*LEFT)
+        time_graph = always_redraw(prepare_for_redraw)
+        self.add(time_graph)
+
+        self.play(tracker.set_value, 20, rate_func=linear, run_time=7)
+        self.wait()
+
+    def TakeOne(self):
+        time_axis = Axes(
+                    x_min = 0    ,x_max=10,
+                    y_min = -2.2     ,y_max=2.2,
+                    x_axis_config = {"unit_size": 2, "tick_frequency":.5,"tick_size":0.25},
+                    y_axis_config = {"unit_size": 2,"tick_frequency":1},
+                ).set_color(BLUE)
+
+        time_func = self.get_time_func(freq = 5)
+        time_graph = self.get_time_graph(time_axis,time_func)
+        self.animate_time_func(time_axis,time_graph)
+        hann_coords = self.set_window(time_axis,1) #5==> Contraction Factor
+        cust_graph = self.get_cust_graph(time_axis,hann_coords[0],hann_coords[1])
+        freq_axis = self.set_freq_axis()
+        freq_graph =self.get_freq_graph(freq_axis,time_func,0,2) #To adjust the mainlope ONLY
+        
+        #self.animate_custom(time_axis,cust_graph)
+        #self.animate_time_func(time_axis,time_graph)
+        #self.animate_fourier(freq_axis,freq_graph)
+
+
+    def TakeOrigin(self):
+
+        time_axis = self.set_time_axis()
+        time_func = self.get_time_func(freq = 5)
+        time_graph = self.get_time_graph(time_axis,time_func)
+        hann_coords = self.set_window(time_axis,1) #5==> Contraction Factor
+        cust_graph = self.get_cust_graph(time_axis,hann_coords[0],hann_coords[1])
+        freq_axis = self.set_freq_axis()
+        freq_graph =self.get_freq_graph(freq_axis,time_func,0,2) #To adjust the mainlope ONLY
+        
+        self.animate_custom(time_axis,cust_graph)
+        #self.animate_time_func(time_axis,time_graph)
+        #self.animate_fourier(freq_axis,freq_graph)
+
+

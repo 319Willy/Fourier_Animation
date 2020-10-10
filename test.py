@@ -132,6 +132,7 @@ class GetGraphTest(Scene):
 #which takes care of axes setup intuatively
 
 class GraphSceneTest(GraphScene):
+
     CONFIG = {
         "x_min":0, "x_max":15,
         "y_min":0,  "y_max":0.5,
@@ -170,3 +171,69 @@ class GraphSceneTest(GraphScene):
         rect.set_stroke(RED,1)
         self.play(ShowCreation(rect),run_time = 5)
         self.wait()
+
+
+#test Date: 08Oct2020
+
+class UpdaterEx1(Scene):
+    def construct(self):
+        #self.setup_axes(animate = True)
+        self.update4()
+
+    def update1(self):
+        dot = Dot(color = RED)
+        label = TexMobject("Hello")
+
+        label.add_updater(lambda m: m.next_to(dot))
+        self.add(dot,label)
+        self.play(dot.shift, 3*LEFT)
+        self.wait()
+
+    def update2(self):
+        axis = NumberLine(x_min = -5, x_max = 5).set_color(TEAL)
+        ball = Dot(color = RED).move_to(axis.get_left())
+        val = DecimalNumber(number = ball.get_center()[0]).move_to(ball.get_center()+0.5*UP).set_color(GREEN)
+        val.add_updater(lambda m: m.move_to(ball.get_center()+0.5*UP))
+        val.add_updater(lambda m: m.set_value(ball.get_center()[0]))
+        self.add(axis,ball,val)
+        self.play(ball.shift,10*RIGHT,run_time = 5, rate_func = there_and_back)
+        self.wait()
+
+    def update3(self):
+        self.offset = 0
+        def update_curve(graph,dt):
+            rate = TAU/6 *dt
+            graph.become(sine(self,self.offset))
+            self.offset += 0.1
+        def sine(self,phase):
+            g = FunctionGraph(lambda t:np.sin(4*t+phase),x_min = -5,x_max = 0)
+            return g
+        graph = sine(self,0)
+        graph.add_updater(update_curve)
+
+        self.add(graph)
+
+        self.wait(5)
+        
+
+    def update4(self):
+        self.offset = 0
+        
+        def update_curve(plot,dt):
+            plot.become(get_plot(self,self.offset))
+            self.offset += 0.01
+
+        def get_plot(self,fwrap):
+            f_sig = 5
+            #fwrap =phi       
+            plt = ParametricFunction(lambda t: np.array([2*np.sin(f_sig*TAU*t)*np.cos(-fwrap*TAU*t),2*np.sin(f_sig*TAU*t)*np.sin(-fwrap*TAU*t),0]), 
+            x_min = -5,x_max = 5).set_color(TEAL)
+            return plt
+        plot = get_plot(self,2)
+        self.add(plot)
+        #self.play(ShowCreation(plot),run_time = 7,rate_func = linear)
+        plot.add_updater(update_curve)
+
+
+        #self.add(plot)
+        self.wait(20)
