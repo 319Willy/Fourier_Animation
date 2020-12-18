@@ -1,9 +1,80 @@
 #Updated For GitHub
 from manimlib.imports import *
+
+# Fourier Imports:
 from manimlib.mobject.FourierLib import*
-#FUNCS =[lambda t:3*np.sin(TAU*t+self.har_Phi), lambda t: np.sin(5*TAU*t+self.har_Phi), lambda t: np.sin(10*TAU*t+self.har_Phi)]        
- 
-class RandomTalk(ThreeDScene):
+USE_ALMOST_FOURIER_BY_DEFAULT = True
+#The used Number of sample is located inside
+#The FourierLib.py file
+NUM_SAMPLES_FOR_FFT = 1000
+#NOISE = lambda t:0.001*np.cos(2*np.pi*9*t)
+
+
+class RandomTalk(GraphScene):
+
+    CONFIG = {
+        "time_axes_config" : {
+            "x_min" : 0,
+            "x_max" : 20,
+            "x_axis_config" : {
+                "unit_size" : 1,
+                "tick_frequency" : 1,
+                "numbers_with_elongated_ticks" : [5, 10, 15,20],
+            },
+            "y_min" : -7,
+            "y_max" : 7,
+            "y_axis_config" : {"unit_size" : 1},
+        },
+        "time_label_t" : 3.4,
+        "circle_plane_config" : {
+            "x_radius" : 2.1,
+            "y_radius" : 2.1,
+            "x_unit_size" : 1,
+            "y_unit_size" : 1,
+        },
+        "frequency_axes_config" : {
+            "number_line_config" : {
+                "color" : TEAL,
+            },
+            "x_min" : 0,
+            "x_max" : 11.0,
+            "x_axis_config" : {
+                "unit_size" : 1,
+                "tick_frequency" : 1,
+                "numbers_to_show" : list(range(0, 11,2)),
+            },
+            "y_min" : 0,
+            "y_max" : 4,
+            "y_axis_config" : {
+                "unit_size" :0.75,
+                "tick_frequency" : 1,
+                "label_direction" : LEFT,
+                "numbers_to_show" : list(range(0, 4,3)),
+            },
+            "color" : BLUE,
+        }
+,
+        "frequency_axes_box_color" : RED,
+        "text_scale_val" : 0.75,
+        "default_graph_config" : {
+            "num_graph_points" : 100,
+            "color" : YELLOW,
+        },
+        "equilibrium_height" : 1,
+        "default_y_vector_animation_config" : {
+            "run_time" : 5,
+            "rate_func" : None,
+            "remover" : True,
+        },
+        "default_time_sweep_config" : {
+            "rate_func" : None,
+            "run_time" : 5,
+        },
+        "default_num_v_lines_indicating_periods" : 20,
+        "mean":0,
+        "variance":0.5
+    }
+
 
     def get_time_axis(self):
         time_axis = Axes(x_min = -6,x_max = 6,y_min = -1.2,y_max = 1.2,
@@ -13,8 +84,17 @@ class RandomTalk(ThreeDScene):
         return time_axis
   
     def get_time_func(self,Amp,Freq,Phi):
-        time_axis = self.get_time_axis()
+        #time_axis = self.get_time_axis()
+        time_axis =self.time_axis
         time_func = lambda t:Amp*np.sin(Freq*TAU*t+Phi)
+        time_signal = time_axis.get_graph(time_func,color = YELLOW)
+        time_graph = VGroup(time_axis,time_signal).move_to(ORIGIN).to_edge(LEFT,buff=1)
+        return time_graph
+
+    def get_ft_func(self,Amp,Freq,Phi):
+        #time_axis = self.get_time_axis()
+        time_axis =self.time_axis
+        time_func = lambda t:Amp*np.sin(Freq*TAU*t+Phi) + 2*np.sin(3*Freq*TAU*t+Phi)
         time_signal = time_axis.get_graph(time_func,color = YELLOW)
         time_graph = VGroup(time_axis,time_signal).move_to(ORIGIN).to_edge(LEFT,buff=1)
         return time_graph
@@ -35,6 +115,27 @@ class RandomTalk(ThreeDScene):
         #harmonics = VGroup(*har_elements)
         
         return harmonics
+
+
+    def get_points_from_coords(self,axes,coords):
+            return [axes.coords_to_point(px,py)
+                for px,py in coords
+                ]
+
+    def get_dots_from_coords(self,axes,coords,radius=0.1):
+            points = self.get_points_from_coords(axes,coords)
+            dots = VGroup(*[
+                Dot(radius=radius).move_to([px,py,pz])
+                for px,py,pz in points
+                ]
+            )
+            return dots
+
+    def get_cust_graph(self,axis,X,Y):
+            coords = [[px,py] for px,py in zip(X,Y)]
+            points = SmoothPtGraph.get_points_from_coords(self,axis,coords)
+            graph = DiscreteGraphFromSetPoints(points,color=TEAL,stroke_width = 4)
+            return graph
 
     def intro(self,):
         
@@ -209,15 +310,17 @@ class RandomTalk(ThreeDScene):
         boarder = Rectangle(width = FRAME_WIDTH,height = FRAME_HEIGHT,stroke_width = 6, color = ORANGE)
         disector = Line(TOP,BOTTOM,stroke_width = 4, color = ORANGE)
         boarders = VGroup(boarder,disector)
-        time_axis = Axes(x_min = 0,x_max = 8,y_min = -2.5,y_max = 2.5,
-                x_axis_config = {"unit_size":0.75,"tick_frequency":1,"include_numbers":True,"numbers_to_show":list(range(1,6,1)),"include_tip":False},
-                y_axis_config = {"unit_size":1.1, "tick_frequency":1}).set_color(BLUE)
+        time_axis = Axes(x_min = 0,x_max = 8,y_min = -7,y_max = 7,
+                x_axis_config = {"unit_size":0.75,"tick_frequency":1,"include_numbers":True,"numbers_to_show":list(range(1,6,1)),"include_tip":True},
+                y_axis_config = {"unit_size":0.43, "tick_frequency":3,"include_numbers":True,"label_direction": UP,"numbers_to_show":list(range(-7,7,3)),"include_tip":True}).set_color(BLUE)
         self.time_axis = time_axis
-        time_func = lambda t:np.sin(TAU*t)+0.9*np.sin(2*TAU*t)+0.6*np.sin(4*TAU*t)+0.4*np.sin(8*TAU*t)
+        time_func = lambda t:4*np.sin(TAU*t-TAU/4)+1.5*np.sin(7*TAU*t)+1*np.sin(8*TAU*t)+0.5*np.sin(9*TAU*t)
         time_signal = time_axis.get_graph(time_func,color = YELLOW)
         time_graph = VGroup(time_axis,time_signal).to_edge(LEFT,buff=0)
         disector.next_to(time_signal)
-        funcs = [lambda t:np.sin(TAU*t), lambda t: 0.9*np.sin(2*TAU*t), lambda t: 0.6*np.sin(4*TAU*t), lambda t: 0.4*np.sin(8*TAU*t) ]        
+        #funcs = [lambda t:np.sin(TAU*t), lambda t: 0.9*np.sin(2*TAU*t), lambda t: 0.6*np.sin(4*TAU*t), lambda t: 0.4*np.sin(8*TAU*t) ]        
+        funcs = [lambda t:4*np.sin(TAU*t-TAU/4), lambda t: 1.5*np.sin(7*TAU*t), lambda t: 1*np.sin(8*TAU*t), lambda t: 0.5*np.sin(9*TAU*t) ]        
+
         colors = [WHITE,RED,GREEN_SCREEN,BLUE_E]
         harmonics = VGroup(*[time_axis.get_graph(f,stroke_width=4,color = color) for f,color in zip(funcs,colors)]).arrange(2*DOWN,aligned_edge = LEFT).to_edge(RIGHT)
         
@@ -234,9 +337,136 @@ class RandomTalk(ThreeDScene):
         ))
         self.wait()
 
+        #Extra Animations
+        self.play(FadeOut(boarders),FadeOut(time_graph))
+        self.wait()
+        output_axes = Axes(x_min = 0,x_max = 12,y_min = 0,y_max = 6,
+                x_axis_config = {"unit_size":0.5,"tick_frequency":1,"include_numbers":True,"numbers_to_show":list(range(1,12,3)),"include_tip":True},
+                y_axis_config = {"unit_size":0.7, "tick_frequency":0.5,"include_numbers":True,"numbers_to_show":list(range(1,5,1)),"include_tip":True,"label_direction": UP}).set_color(BLUE).to_edge(LEFT).shift(3*DOWN)
+        out_axes = Axes(x_min = 0,x_max = 12,y_min = 0,y_max = 6,
+                x_axis_config = {"unit_size":0.5,"tick_frequency":1,"include_numbers":True,"numbers_to_show":list(range(1,12,3)),"include_tip":True},
+                y_axis_config = {"unit_size":0.7, "tick_frequency":0.5,"include_numbers":True,"numbers_to_show":list(range(1,5,1)),"include_tip":True,"label_direction": UP}).set_color(BLUE).to_edge(RIGHT).shift(3*DOWN)
+        
+        x =       [0,1,2,3,4,5,6,7,8,9,10,11]
+        y =       [0,4,0,0,0,0,0,1.5,1,0.5,0,0,0]
+        y_z =     [0,0,0,0,0,0,0,0,0,0,0,0,0]
+        y_phase = [0,4,0,0,0,0,0,0,0,0,0,0,0]
 
+        #AMP VS FREQ
+        coords = [[px,py] for px,py in zip(x,y)]
+        points = self.get_points_from_coords(output_axes,coords)
+        dots = VGroup(*[Dot(color = YELLOW).move_to(output_axes).move_to([px,py,pz]) for px,py,pz in points])
+        # ZERO VS FREQ
+        coords_z = [[px,py] for px,py in zip(x,y_z)]
+        points_z = self.get_points_from_coords(output_axes,coords_z)
+        dots_z = VGroup(*[Dot(color = YELLOW).move_to(output_axes).move_to([px,py,pz]) for px,py,pz in points_z])
+
+        #PHASE VS Freq
+        #out_axes = output_axes.copy().to_edge(RIGHT)
+        coords_p = [[px,py] for px,py in zip(x,y_phase)]
+        points_p = self.get_points_from_coords(out_axes,coords_p)
+        points_zp = self.get_points_from_coords(out_axes,coords_z)
+        dots_p = VGroup(*[Dot(color = RED).move_to(out_axes).move_to([px,py,pz]) for px,py,pz in points_p])
+
+        dots_zp = VGroup(*[Dot(color = YELLOW).move_to(out_axes).move_to([px,py,pz]) for px,py,pz in points_zp])
+
+        lines = VGroup(*[Line(dots_z[i],dots[i]) for i in range(11)])
+        [lines.set_color(color) for color in colors]
+        self.add(output_axes,dots_z) 
+
+        lines_p = VGroup(*[Line(dots_zp[i],dots_p[i]) for i in range(11)])
+        [lines_p.set_color(color) for color in colors]
+        
+        
+        self.play(Transform(dots_z[1],dots[1]),TransformFromCopy(harmonics[0],lines[1].set_color(WHITE)))
+        self.play(Transform(dots_z[7],dots[7]),Transform(harmonics[1],lines[7].set_color(RED)))
+        self.play(Transform(dots_z[8],dots[8]),Transform(harmonics[2],lines[8].set_color(GREEN_SCREEN)))
+        self.play(Transform(dots_z[9],dots[9]),Transform(harmonics[3],lines[9].set_color(BLUE)))
+        
+        self.play(FadeIn((time_axis.move_to(harmonics[0]).set_color(GREEN))))
+
+        self.wait()  
+        self.play(Transform(time_axis,out_axes),ShowCreation(dots_zp))
+        self.play(Transform(dots_zp[1],dots_p[1]),Transform(harmonics[0],lines_p[1].set_color(RED)))
+        self.wait()
+        #New Day Animations
+        self.play(self.camera_frame.scale, 1.6,self.camera_frame.shift,2*UP)
+        fourier_box = Rectangle(width = FRAME_WIDTH/1.25,height = 2,stroke_width=6,color = YELLOW).shift(4.5*UP)
+        fourier_transform_text = TexMobject("Fourier\\ Transform").scale(2).move_to(fourier_box)
+        ar_st = fourier_box.get_bottom()
+        left_arrow = Arrow(ar_st+3*LEFT,ar_st+3*LEFT + 2*DOWN)
+        right_arrow = Arrow(ar_st+3*RIGHT, ar_st+3*RIGHT + 2*DOWN )
+        midUP_arrow = Arrow(fourier_box.get_top()+2*UP,fourier_box.get_top())
+        self.add(fourier_box,fourier_transform_text,left_arrow,right_arrow,midUP_arrow)
+        
+        y = TexMobject(r"y = f(t)",color = YELLOW).next_to(midUP_arrow,UP).scale(1.5)
+        Y = TexMobject(r"Y = F(\omega)",color = BLUE).next_to(fourier_box,DOWN).scale(1.5)
+        AMP = TexMobject(r"Amp = \left| Y \right|",color = YELLOW).next_to(left_arrow,DOWN).scale(1.5)
+        PHASE = TexMobject(r"Phase = \angle Y",color = YELLOW).next_to(right_arrow,DOWN).scale(1.5)
+        self.add(y,Y,AMP,PHASE)
+
+        self.wait()
+        self.clear()
+        
+        AMP = TexMobject(r"\\ = \left| Y \right|",color = YELLOW).next_to(Y,RIGHT).scale(1.5)
+        PHASE = TexMobject(r"\angle Y",color = YELLOW).next_to(AMP,RIGHT).scale(1.5)
+        eqn = VGroup(Y,AMP,PHASE).move_to(ORIGIN)
+        self.add(y,eqn)
+        self.wait()
+        
+    def introducing_fourier_plot(self):
+        box = Rectangle(width = FRAME_WIDTH,height = FRAME_HEIGHT, color = TEAL,stroke_width = 4)
+        divider = Line(box.get_left(),box.get_right(),color  =TEAL,stroke_width = 4)
+        #self.add(box,divider)
+        
+        #Get Time/Frequency Axes
+        time_axis = Axes(x_min = 0,x_max = 5,y_min = -4.0,y_max = 4.0,
+                x_axis_config = {"unit_size":2,"tick_frequency":2,"include_numbers":True,"numbers_to_show":list(range(0,6,2)),"include_tip":True},
+                y_axis_config = {"unit_size":0.5, "tick_frequency":1,"include_numbers":True,"label_direction": UP,"numbers_to_show":list(range(-3,5,2)),"include_tip":True}).set_color(BLUE)
+        self.time_axis = time_axis
+        freq_axes = Fourier.get_frequency_axes(self)
+        
+        #Get time/Frequency Function
+        time_func = lambda t:3*np.sin(TAU*2*t) + 2*np.sin(TAU*6*t)
+        time_graph = self.get_ft_func(3,1,0).to_edge(UP,buff = 0).scale(0.9)
+        time_graph.save_state()
+        freq_graph = Fourier.get_fourier_graph(self,freq_axes,time_func,0,5)
+        freq_graph = VGroup(freq_axes,freq_graph).move_to(ORIGIN).to_edge(DOWN,buff = 0).to_edge(LEFT,buff = 1).scale(0.9)
+        freq_graph.save_state()
+        #self.add(freq_axes,freq_graph,time_graph)
+
+        #Some Animations
+        self.play(ShowCreation(time_graph.move_to(ORIGIN).scale(1.2)))
+        self.wait()
+        self.play(time_graph.restore)
+        self.wait()
+
+        self.play(ShowCreation(VGroup(box,divider)),run_time = 0.5)
+        self.wait()
+
+        self.play(FadeIn(freq_graph[0]),ShowCreation(freq_graph[1],run_time = 5 ,rate_func = linear))
+        self.wait()
+    
     def construct(self):
         #self.intro()
         #self.msg_containers()
         #self.harmonic_deconstructor()
-        self.frequency_as_handle()
+        #self.frequency_as_handle()
+        self.introducing_fourier_plot()
+
+class DiscreteGraphFromSetPoints(VMobject):
+    def __init__(self,set_of_points,**kwargs):
+        super().__init__(**kwargs)
+        self.set_points_as_corners(set_of_points)
+
+
+
+class SmoothPtGraph(VMobject):
+    def __init__(self,set_of_points,**kwargs):
+        super().__init__(**kwargs)
+        self.set_points_smoothly(set_of_points)
+
+    def get_points_from_coords(self,axes,coords):
+        return [axes.coords_to_point(px,py)
+            for px,py in coords
+            ]

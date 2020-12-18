@@ -99,7 +99,7 @@ class Fourier(GraphScene):
                 x, 2*complex_to_real_func(y)/(n_samples),
             )
             #[ORIGINAL] for x, y in zip(frequencies, fft_output[:n_samples//57])
-            for x, y in zip(frequencies, fft_output[:n_samples//(20//t_range)]) #Use this number to manipulte the length
+            for x, y in zip(frequencies, fft_output[:n_samples//(100//t_range)]) #Use this number to manipulte the length:N_samples/20 = Length
             
         ])
         graph.set_color(color)
